@@ -19,12 +19,18 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        // Setting up dataSource and delegate
         tableView.dataSource = self
         tableView.delegate = self
         
+        // Create refreshControl for the tableView
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: "refreshControlAction:", forControlEvents: UIControlEvents.ValueChanged)
+        tableView.insertSubview(refreshControl, atIndex: 0)
+        
+        // Make initial data loading
         loadDataFromNetwork()
         
-        // Do any additional setup after loading the view.
     }
 
     override func didReceiveMemoryWarning() {
@@ -32,10 +38,17 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
         // Dispose of any resources that can be recreated.
     }
     
+    func refreshControlAction(refreshControl: UIRefreshControl){
+        loadDataFromNetwork()
+        refreshControl.endRefreshing()
+    }
+    
     func loadDataFromNetwork(){
         
+        // Initiate ProgressHUB
         MBProgressHUD.showHUDAddedTo(self.view, animated: true)
         
+        // Load movie data from network
         let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
         let url = NSURL(string:"https://api.themoviedb.org/3/movie/now_playing?api_key=\(apiKey)")
         let request = NSURLRequest(URL: url!)
@@ -55,22 +68,29 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
                             self.tableView.reloadData()
                     }
                 }
+                
+                // Hide ProgressHUD after data has been fetched
                 MBProgressHUD.hideHUDForView(self.view, animated: true)
         });
         task.resume()
     }
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
+        // If data has been fetched successfully from the Internet
         if let movies = movies {
             return movies.count
-        } else{
+        }
+        // Else show an empty table
+        else{
             return 0
         }
     }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell{
+        // Reuse any avaiable cell
         let cell = tableView.dequeueReusableCellWithIdentifier("MovieCell", forIndexPath: indexPath) as! MovieCell
         
+        // Update cell with movie information
         let movie = movies![indexPath.row]
         let title = movie["title"] as! String
         let overview = movie["overview"] as! String
