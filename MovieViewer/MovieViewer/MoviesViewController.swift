@@ -59,7 +59,9 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
         // Load movie data from network
         let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
         let url = NSURL(string:"https://api.themoviedb.org/3/movie/now_playing?api_key=\(apiKey)")
-        let request = NSURLRequest(URL: url!, cachePolicy: .ReloadIgnoringLocalCacheData, timeoutInterval: 10)
+        
+        // Cache will be used only after validation
+        let request = NSURLRequest(URL: url!, cachePolicy: .ReloadRevalidatingCacheData, timeoutInterval: 10)
         let session = NSURLSession(
             configuration: NSURLSessionConfiguration.defaultSessionConfiguration(),
             delegate:nil,
@@ -78,6 +80,7 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
                     }
                 }
                 else{
+                    // Failed to retrieve information from server. Set the alert!
                     self.presentViewController(networkAlert, animated: true, completion: nil)
                 }
                 
