@@ -45,18 +45,27 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
     
     func loadDataFromNetwork(){
         
+        // Setting up the Alert for no Internet connection
+        let networkAlert = UIAlertController(title: "Error", message: "Unable to reach server. Check your Internet connection", preferredStyle: .Alert)
+        let retryAction = UIAlertAction(title: "Retry", style: .Default){ (action) in
+            self.loadDataFromNetwork()
+            return
+        }
+        networkAlert.addAction(retryAction)
+        
         // Initiate ProgressHUB
         MBProgressHUD.showHUDAddedTo(self.view, animated: true)
         
         // Load movie data from network
         let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
         let url = NSURL(string:"https://api.themoviedb.org/3/movie/now_playing?api_key=\(apiKey)")
-        let request = NSURLRequest(URL: url!)
+        let request = NSURLRequest(URL: url!, cachePolicy: .ReloadIgnoringLocalCacheData, timeoutInterval: 10)
         let session = NSURLSession(
             configuration: NSURLSessionConfiguration.defaultSessionConfiguration(),
             delegate:nil,
             delegateQueue:NSOperationQueue.mainQueue()
         )
+        
         
         let task : NSURLSessionDataTask = session.dataTaskWithRequest(request,
             completionHandler: { (dataOrNil, response, error) in
@@ -68,6 +77,10 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
                             self.tableView.reloadData()
                     }
                 }
+                else{
+                    self.presentViewController(networkAlert, animated: true, completion: nil)
+                }
+                
                 
                 // Hide ProgressHUD after data has been fetched
                 MBProgressHUD.hideHUDForView(self.view, animated: true)
