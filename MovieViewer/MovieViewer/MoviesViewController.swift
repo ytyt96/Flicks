@@ -10,23 +10,28 @@ import UIKit
 import AFNetworking
 import MBProgressHUD
 
-class MoivesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class MoivesViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UISearchBarDelegate{
 
-    @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var movieSearchBar: UISearchBar!
+    
+
+    @IBOutlet weak var movieCollectionView: UICollectionView!
     
     var movies: [NSDictionary]?
+    var filteredMovies : [NSDictionary]?
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Setting up dataSource and delegate
-        tableView.dataSource = self
-        tableView.delegate = self
+        movieCollectionView.dataSource = self
+        movieCollectionView.delegate = self
+        movieSearchBar.delegate = self
         
         // Create refreshControl for the tableView
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: "refreshControlAction:", forControlEvents: UIControlEvents.ValueChanged)
-        tableView.insertSubview(refreshControl, atIndex: 0)
+        movieCollectionView.insertSubview(refreshControl, atIndex: 0)
         
         // Make initial data loading
         loadDataFromNetwork()
@@ -45,14 +50,6 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
     
     func loadDataFromNetwork(){
         
-        // Setting up the Alert for no Internet connection
-        let networkAlert = UIAlertController(title: "Error", message: "Unable to reach server. Check your Internet connection", preferredStyle: .Alert)
-        let retryAction = UIAlertAction(title: "Retry", style: .Default){ (action) in
-            self.loadDataFromNetwork()
-            return
-        }
-        networkAlert.addAction(retryAction)
-        
         // Initiate ProgressHUB
         MBProgressHUD.showHUDAddedTo(self.view, animated: true)
         
@@ -61,7 +58,7 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
         let url = NSURL(string:"https://api.themoviedb.org/3/movie/now_playing?api_key=\(apiKey)")
         
         // Cache will be used only after validation
-        let request = NSURLRequest(URL: url!, cachePolicy: .ReloadRevalidatingCacheData, timeoutInterval: 10)
+        let request = NSURLRequest(URL: url!, cachePolicy: .ReloadRevalidatingCacheData, timeoutInterval: 3)
         let session = NSURLSession(
             configuration: NSURLSessionConfiguration.defaultSessionConfiguration(),
             delegate:nil,
@@ -76,10 +73,23 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
                         data, options:[]) as? NSDictionary {
                             NSLog("response: \(responseDictionary)")
                             self.movies = responseDictionary["results"] as? [NSDictionary]
-                            self.tableView.reloadData()
+                            self.filteredMovies = self.movies
+                            self.movieCollectionView.reloadData()
                     }
                 }
                 else{
+                    // Setting up the Alert for no Internet connection
+                    let networkAlert = UIAlertController(title: "Error", message: "Unable to reach server. Check your Internet connection", preferredStyle: .Alert)
+                    let retryAction = UIAlertAction(title: "Retry", style: .Default){ (action) in
+                        self.loadDataFromNetwork()
+                        return
+                    }
+                    let settingsAction = UIAlertAction(title: "Settings", style: .Default){ (action) in
+                        let settingsUrl = NSURL(string: UIApplicationOpenSettingsURLString)
+                        UIApplication.sharedApplication().openURL(settingsUrl!)
+                    }
+                    networkAlert.addAction(retryAction)
+                    networkAlert.addAction(settingsAction)
                     // Failed to retrieve information from server. Set the alert!
                     self.presentViewController(networkAlert, animated: true, completion: nil)
                 }
@@ -90,37 +100,82 @@ class MoivesViewController: UIViewController, UITableViewDataSource, UITableView
         });
         task.resume()
     }
-    
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
+    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int{
         // If data has been fetched successfully from the Internet
-        if let movies = movies {
+        if let movies = filteredMovies {
             return movies.count
         }
-        // Else show an empty table
+            // Else show an empty table
         else{
             return 0
         }
+
     }
     
-    func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell{
+    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell{
         // Reuse any avaiable cell
-        let cell = tableView.dequeueReusableCellWithIdentifier("MovieCell", forIndexPath: indexPath) as! MovieCell
+        let cell = collectionView.dequeueReusableCellWithReuseIdentifier("MovieCell", forIndexPath: indexPath) as! MovieCell
         
         // Update cell with movie information
-        let movie = movies![indexPath.row]
-        let title = movie["title"] as! String
-        let overview = movie["overview"] as! String
-        let posterPath = movie["poster_path"] as! String
-        let baseUrl = "http://image.tmdb.org/t/p/w500"
-        let imageUrl = NSURL(string: baseUrl + posterPath)
+        let movie = filteredMovies![indexPath.row]
+        if let posterPath = movie["poster_path"] as? String{
+            let baseUrl = "http://image.tmdb.org/t/p/w500"
+            if let imageUrl = NSURL(string: baseUrl + posterPath){
+                let imageRequest = NSURLRequest(URL: imageUrl)
+                
+                // Let's do some animation
+                cell.movieImageView.setImageWithURLRequest(imageRequest, placeholderImage: nil, success: {(imagerequest, imageResponse, image) -> Void in
+                    if imageResponse != nil{
+                        cell.movieImageView.alpha = 0.0
+                        cell.movieImageView.image = image
+                        UIView.animateWithDuration(0.3, animations: {() -> Void in
+                            cell.movieImageView.alpha = 1.0
+                        })
+                    } else{
+                        cell.movieImageView.image = image
+                    }},
+                    failure: nil
+                )
+            }
+        }
         
-        cell.titleLabel.text = title
-        cell.overviewLabel.text = overview
-        cell.posterView.setImageWithURL(imageUrl!)
-
         return cell
     }
+    
+    func searchBar(searchBar: UISearchBar, textDidChange searchText: String){
+        if searchText.isEmpty {
+            // Nothing in the text field, so no filtering will be done
+            filteredMovies = movies
+        } else {
+            filteredMovies = movies!.filter({(dataItem: NSDictionary) -> Bool in
+                // If dataItem matches the searchText, return true to include it
+                if let title = dataItem["title"] as? String{
+                    if title.rangeOfString(searchText, options: .CaseInsensitiveSearch) != nil{
+                        return true
+                    }
+                }
+                return false
+            })
+        }
+        movieCollectionView.reloadData()
+    }
+    
 
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        movieCollectionView.indexPathsForSelectedItems()
+        if segue.identifier == "MovieCellPushed"{
+            if let destination = segue.destinationViewController as? MovieInfoViewController{
+                let movie = filteredMovies![(movieCollectionView.indexPathsForSelectedItems()?.first?.row)!]
+
+                destination.selectedMovie = movie
+            }
+        }
+    }
+        
+    func scrollViewWillBeginDragging(scrollView: UIScrollView) {
+        movieSearchBar.endEditing(true)
+    }
+    
     /*
     // MARK: - Navigation
 
