@@ -176,6 +176,9 @@ class MoivesViewController: UIViewController, UICollectionViewDataSource, UIColl
         movieSearchBar.endEditing(true)
     }
     
+    func scrollViewWillBeginDragging(scrollView: UIScrollView) {
+        movieSearchBar.endEditing(true)
+    }
     
     /*
     // MARK: - Navigation
