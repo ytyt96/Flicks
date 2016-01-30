@@ -171,11 +171,7 @@ class MoivesViewController: UIViewController, UICollectionViewDataSource, UIColl
             }
         }
     }
-    
-    func searchBarCancelButtonClicked(searchBar: UISearchBar){
-        movieSearchBar.endEditing(true)
-    }
-    
+        
     func scrollViewWillBeginDragging(scrollView: UIScrollView) {
         movieSearchBar.endEditing(true)
     }
