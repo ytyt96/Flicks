@@ -162,28 +162,18 @@ class MoivesViewController: UIViewController, UICollectionViewDataSource, UIColl
     
 
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        movieCollectionView.indexPathsForSelectedItems()
         if segue.identifier == "MovieCellPushed"{
-            if let destination = segue.destinationViewController as? MovieInfoViewController{
-                let movie = filteredMovies![(movieCollectionView.indexPathsForSelectedItems()?.first?.row)!]
+            let destination = segue.destinationViewController as! MovieInfoViewController;
+            let movieCell = sender as! MovieCell
+            let movie = filteredMovies![(movieCollectionView.indexPathForCell(movieCell)?.row)!] 
 
-                destination.selectedMovie = movie
-            }
+            destination.selectedMovie = movie
         }
     }
-        
+    
     func scrollViewWillBeginDragging(scrollView: UIScrollView) {
         movieSearchBar.endEditing(true)
     }
     
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
-    }
-    */
 
 }
