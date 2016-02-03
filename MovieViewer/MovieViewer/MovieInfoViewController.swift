@@ -13,11 +13,17 @@ class MovieInfoViewController: UIViewController {
     @IBOutlet weak var movieImageView: UIImageView!
     @IBOutlet weak var movieTitle: UILabel!
     @IBOutlet weak var movieReleaseDate: UILabel!
-    @IBOutlet weak var movieSummary: UITextView!
+    @IBOutlet weak var movieSummary: UILabel!
+    @IBOutlet weak var movieScrollView: UIScrollView!
+    @IBOutlet weak var infoView: UIView!
     
     var selectedMovie: NSDictionary?
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        movieScrollView.contentSize = CGSize(width: movieScrollView.frame.size.width, height: infoView.frame.size.height + infoView.frame.origin.y)
+        
+        
         if let posterPath = selectedMovie!["poster_path"] as? String{
             let baseUrl = "http://image.tmdb.org/t/p/w500"
             if let imageUrl = NSURL(string: baseUrl + posterPath){
@@ -34,6 +40,7 @@ class MovieInfoViewController: UIViewController {
         
         if let overview = selectedMovie!["overview"] as? String{
             movieSummary.text = overview
+            movieSummary.sizeToFit()
         }
         else{
             movieSummary.text = "There is no overview for this movie now. Please check back later."

@@ -10,7 +10,7 @@ import UIKit
 import AFNetworking
 import MBProgressHUD
 
-class MoivesViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UISearchBarDelegate{
+class MoviesViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate, UISearchBarDelegate{
 
     @IBOutlet weak var movieSearchBar: UISearchBar!
     
@@ -19,6 +19,7 @@ class MoivesViewController: UIViewController, UICollectionViewDataSource, UIColl
     
     var movies: [NSDictionary]?
     var filteredMovies : [NSDictionary]?
+    var endpoint: String!
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -55,7 +56,7 @@ class MoivesViewController: UIViewController, UICollectionViewDataSource, UIColl
         
         // Load movie data from network
         let apiKey = "a07e22bc18f5cb106bfe4cc1f83ad8ed"
-        let url = NSURL(string:"https://api.themoviedb.org/3/movie/now_playing?api_key=\(apiKey)")
+        let url = NSURL(string:"https://api.themoviedb.org/3/movie/\(endpoint)?api_key=\(apiKey)")
         
         // Cache will be used only after validation
         let request = NSURLRequest(URL: url!, cachePolicy: .ReloadRevalidatingCacheData, timeoutInterval: 3)
