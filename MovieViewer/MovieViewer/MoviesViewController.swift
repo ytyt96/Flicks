@@ -139,7 +139,6 @@ class MoviesViewController: UIViewController, UICollectionViewDataSource, UIColl
                 )
             }
         }
-        
         return cell
     }
     
@@ -161,7 +160,16 @@ class MoviesViewController: UIViewController, UICollectionViewDataSource, UIColl
         movieCollectionView.reloadData()
     }
     
-
+    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath){
+        let cell = movieCollectionView.cellForItemAtIndexPath(indexPath) as! MovieCell
+        UIView.animateWithDuration(0.5, animations: {() -> Void in
+                cell.alpha = 0.5
+        })
+        UIView.animateWithDuration(0.5, animations: {() -> Void in
+            cell.alpha = 1
+        })
+    }
+    
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         if segue.identifier == "MovieCellPushed"{
             let destination = segue.destinationViewController as! MovieInfoViewController;
