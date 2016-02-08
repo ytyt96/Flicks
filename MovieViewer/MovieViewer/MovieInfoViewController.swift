@@ -21,9 +21,6 @@ class MovieInfoViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        movieScrollView.contentSize = CGSize(width: movieScrollView.frame.size.width, height: infoView.frame.size.height + infoView.frame.origin.y)
-        
-        
         if let posterPath = selectedMovie!["poster_path"] as? String{
             let baseUrl = "http://image.tmdb.org/t/p/w500"
             if let imageUrl = NSURL(string: baseUrl + posterPath){
@@ -41,6 +38,8 @@ class MovieInfoViewController: UIViewController {
         if let overview = selectedMovie!["overview"] as? String{
             movieSummary.text = overview
             movieSummary.sizeToFit()
+            infoView.frame.size.height = movieSummary.frame.origin.y
+             + movieSummary.frame.size.height + 150
         }
         else{
             movieSummary.text = "There is no overview for this movie now. Please check back later."
@@ -53,6 +52,8 @@ class MovieInfoViewController: UIViewController {
         
         movieSummary.font = UIFont.systemFontOfSize(16)
         // Do any additional setup after loading the view.
+        
+        movieScrollView.contentSize = CGSize(width: movieScrollView.frame.size.width, height: infoView.frame.size.height + infoView.frame.origin.y)
     }
 
     override func didReceiveMemoryWarning() {
